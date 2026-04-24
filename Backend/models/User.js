@@ -1,29 +1,39 @@
 const mongoose = require("mongoose");
-const { Schema } = mongoose;
 
 const userSchema = new mongoose.Schema({
-    name:{
-        type:String,
-        require:true,
-        trim:true,
+    name: {
+        type: String,
+        required: true,
+        trim: true,
     },
-    email:{
-        type:String,
-        require:true,
-        trim:true,
+    email: {
+        type: String,
+        required: true,
+        trim: true,
+        lowercase: true,
     },
-    password:{
-        type:String,
-        require:true,
+    password: {
+        type: String,
+        required: true,
     },
-    role:{
-        type:String,
-        enum:["Admin","Customer"],
+    role: {
+        type: String,
+        enum: ["Admin", "Customer"],
         default: "Customer"
     },
-    phone:{
-        type:String,
+    phone: {
+        type: String,
+    },
+    // Using Mixed to stay compatible with any shape of stored data
+    // (avoids cast errors when old documents have different field names/types)
+    favorites: {
+        type: [mongoose.Schema.Types.Mixed],
+        default: []
+    },
+    recentOrders: {
+        type: [mongoose.Schema.Types.Mixed],
+        default: []
     }
-})
+}, { timestamps: true });
 
-module.exports = mongoose.model("User",userSchema);
+module.exports = mongoose.model("User", userSchema);

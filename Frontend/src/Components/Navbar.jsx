@@ -1,64 +1,49 @@
 import logo from '../assets/logo.png';
 import { IoPerson } from "react-icons/io5";
-import { FaShoppingCart } from "react-icons/fa";
-import { FaBars, FaTimes } from "react-icons/fa"; // Add for hamburger
+import { FaShoppingCart, FaBars, FaTimes } from "react-icons/fa";
 import './Navbar.css';
 import { NavLink } from 'react-router-dom';
-import { useState } from 'react'; // Now used for mobile toggle
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function Navbar() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
 
-    const toggleMobileMenu = () => {
-        setIsMobileMenuOpen(!isMobileMenuOpen);
-    };
+    useEffect(() => {
+        const handleScroll = () => setScrolled(window.scrollY > 40);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const navLinks = [
+        { path: '/', label: 'Home' },
+        { path: '/products', label: 'Products' },
+        { path: '/delivery', label: 'Delivery' },
+        { path: '/dinein', label: 'Dine-In' },
+        { path: '/catering', label: 'Catering' },
+    ];
 
     return (
-        <header className="navbar-header"> {/* Wrapper for better semantics */}
+        <header className={`navbar-header ${scrolled ? 'navbar-header--scrolled' : ''}`}>
             <nav className="navbar">
                 <div className="logo-section">
                     <NavLink to="/" className="logo-link">
                         <img src={logo} alt="FrozenFeast Logo" />
-                        <p>FrozenFeast</p>
+                        <p>Frozen<span className="logo-accent">Feast</span></p>
                     </NavLink>
                 </div>
 
-                <div className={`menu-section ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-                    <NavLink
-                        to="/"
-                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                        onClick={() => setIsMobileMenuOpen(false)} // Close on click (mobile)
-                    >
-                        Home
-                    </NavLink>
-                    <NavLink
-                        to="/products"
-                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                        Products
-                    </NavLink>
-                    <NavLink
-                        to="/delivery"
-                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                        Delivery
-                    </NavLink>
-                    <NavLink
-                        to="/dinein"
-                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                        Dine-In
-                    </NavLink>
-                    <NavLink
-                        to="/catering"
-                        className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                        Catering
-                    </NavLink>
+                <div className="menu-section">
+                    {navLinks.map((link) => (
+                        <NavLink
+                            key={link.path}
+                            to={link.path}
+                            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                        >
+                            {link.label}
+                        </NavLink>
+                    ))}
                 </div>
 
                 <div className="icons-section">
@@ -70,19 +55,20 @@ function Navbar() {
                         </NavLink>
                     ) : (
                         <NavLink to="/login" aria-label="Login">
-                            <button className="icon-btn" aria-label="User profile">
+                            <button className="icon-btn" aria-label="Login">
                                 <IoPerson />
                             </button>
                         </NavLink>
                     )}
-                    <NavLink to="/cart" aria-label="Shopping Cart">
+                    <NavLink to="/cart" aria-label="Shopping Cart" className="cart-link-desktop">
                         <button className="icon-btn" aria-label="View cart">
                             <FaShoppingCart />
                         </button>
                     </NavLink>
+
                     <button
                         className="hamburger-btn"
-                        onClick={toggleMobileMenu}
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                         aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
                         aria-expanded={isMobileMenuOpen}
                     >
@@ -90,6 +76,49 @@ function Navbar() {
                     </button>
                 </div>
             </nav>
+
+            {/* Mobile overlay */}
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <motion.div
+                        className="mobile-overlay"
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3, ease: "easeOut" }}
+                    >
+                        {navLinks.map((link, i) => (
+                            <motion.div
+                                key={link.path}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: i * 0.06, duration: 0.3 }}
+                            >
+                                <NavLink
+                                    to={link.path}
+                                    className={({ isActive }) => `mobile-nav-item ${isActive ? 'active' : ''}`}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    {link.label}
+                                </NavLink>
+                            </motion.div>
+                        ))}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.35 }}
+                        >
+                            <NavLink
+                                to="/products"
+                                className="mobile-cta"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                Order Now
+                            </NavLink>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </header>
     );
 }

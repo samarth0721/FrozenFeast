@@ -1,126 +1,189 @@
+/* DineIn page — luxurious dark theme */
 .dinein-container {
-  padding: 1rem;
-  max-width: 1200px;
-  margin: 0 auto;
+    min-height: 80vh;
+    background: transparent;
+    color: #f0f0f5;
+    padding-bottom: 60px;
 }
 
-.ribbon-container {
-  text-align: center;
-  padding: 20px;
+/* ── Hero & Search Section ───────────────────────────── */
+.dinein-hero {
+    position: relative;
+    text-align: center;
+    padding: 60px 20px 40px;
+    margin-bottom: 30px;
+    background: radial-gradient(circle at 50% -20%, rgba(224, 64, 251, 0.12), transparent 60%);
 }
 
-.ribbon {
-  background-color: #ec407a; /* pink shade */
-  padding: 10px 30px;
-  display: inline-block;
-  clip-path: polygon(10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%, 0% 50%);
+.hero-badge {
+    display: inline-block;
+    padding: 6px 16px;
+    background: rgba(224, 64, 251, 0.15);
+    border: 1px solid rgba(224, 64, 251, 0.3);
+    color: #e040fb;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 16px;
 }
 
-.ribbon-text {
-  color: white;
-  font-size: 24px;
-  font-weight: bold;
-  text-transform: uppercase;
+.dinein-hero h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 3rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 16px;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
-/* Search Section Styling (Matching Image) */
-.search-section {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.dine-in-badge {
-  background-color: #ff69b4; /* Pink color from image */
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  display: inline-block;
-  margin-bottom: 1rem;
-  position: relative;
-  font-weight: bold;
-  box-shadow: 0 2px 4px rgba(255, 105, 180, 0.3); /* Subtle shadow for ribbon effect */
-}
-
-.dine-in-badge::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -1rem;
-  width: 0;
-  height: 0;
-  border-top: 1rem solid transparent;
-  border-right: 1rem solid #ff69b4;
-  border-bottom: 1rem solid transparent;
-} /* Optional: Ribbon tail for badge */
-
-.search-title {
-  font-size: 1.5rem;
-  color: #333;
-  margin-bottom: 1rem;
+.hero-subtitle {
+    font-size: 1.1rem;
+    color: #9e9eaf;
+    max-width: 600px;
+    margin: 0 auto 30px;
+    line-height: 1.6;
 }
 
 .location-search {
-  display: flex;
-  justify-content: center;
-  max-width: 500px;
-  margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    max-width: 550px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 10;
 }
 
 .search-wrapper {
-  position: relative;
-  display: flex;
-  width: 100%;
+    position: relative;
+    display: flex;
+    width: 100%;
 }
 
 .location-input {
-  flex: 1;
-  padding: 0.75rem 3rem 0.75rem 1rem; /* Padding-right for button space */
-  border: 1px solid #ddd;
-  border-radius: 2rem; /* Rounded like image */
-  font-size: 1rem;
-  outline: none;
-  box-sizing: border-box; /* Include padding in width */
+    flex: 1;
+    padding: 18px 80px 18px 24px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50px;
+    font-size: 1rem;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.location-input::placeholder {
+    color: #6e6e7a;
 }
 
 .location-input:focus {
-  border-color: #ff69b4; /* Pink focus */
+    border-color: #e040fb;
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 8px 32px rgba(224, 64, 251, 0.15);
 }
 
-/* Button Positioned Inside Input on Right */
 .search-button-new {
-  position: absolute;
-  right: 0.5rem; /* Offset from right edge */
-  top: 50%;
-  transform: translateY(-50%); /* Center vertically */
-  background-color: transparent; /* Changed to transparent (no pink background) */
-  
-  border: none;
-  border-radius: 50%; /* Circular button */
-  width: 2rem;
-  height: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: color 0.2s; /* Smooth transition for icon color */
-  z-index: 1; /* Ensure above input */
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(135deg, #e040fb, #ff4081);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.1rem;
+    z-index: 1;
+    transition: transform 0.2s, box-shadow 0.2s;
+    color: white;
 }
 
 .search-button-new:hover {
-  
-}
-/* Shops Grid (Unchanged) */
-.shops-grid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 2rem;
-  margin-top: 1rem;
+    transform: translateY(-50%) scale(1.05);
+    box-shadow: 0 4px 15px rgba(224, 64, 251, 0.4);
 }
 
-h1 {
-  text-align: center;
-  color: black;
-  margin-bottom: 1rem;
+/* ── Shops Grid ───────────────────────────── */
+.shops-container {
+    padding: 0 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.shops-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+    justify-items: center;
+}
+
+/* ── Empty State & Loading ──────────────── */
+.empty-shops {
+    text-align: center;
+    padding: 80px 20px;
+    grid-column: 1 / -1;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    opacity: 0.5;
+    margin-bottom: 20px;
+    display: inline-block;
+}
+
+.empty-shops p {
+    color: #9e9eaf;
+    font-size: 1.2rem;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 60vh;
+    color: #9e9eaf;
+    font-size: 1.2rem;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(224, 64, 251, 0.3);
+    border-radius: 50%;
+    border-top-color: #e040fb;
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+    .dinein-hero {
+        padding: 40px 20px;
+    }
+    .dinein-hero h1 {
+        font-size: 2.2rem;
+    }
+    .shops-container {
+        padding: 0 20px;
+    }
+    .shops-grid {
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 20px;
+    }
 }

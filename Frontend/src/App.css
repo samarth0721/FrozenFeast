@@ -1,56 +1,89 @@
-/* .App {
-  text-align: center;
-} */
-/* 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-} */
-
+/* App Layout */
 .app-layout {
   display: flex;
   flex-direction: column;
-  min-height: 100vh; /* Full viewport height */
+  min-height: 100vh;
+  background-color: #08080c;
+  color: #f0f0f5;
+  font-family: 'Inter', -apple-system, sans-serif;
 }
 
 .app-main {
-  flex: 1; /* Takes remaining space, pushes Footer down */
-  padding: 20px; /* Optional: Content padding */
+  flex: 1;
+  padding: 0;
+  padding-top: 70px; /* Offset for fixed navbar */
 }
 
-/* Optional: Ensure body has no default margins */
 body, html {
   margin: 0;
   padding: 0;
   height: 100%;
+  background-color: #08080c;
+}
+
+/* ═══════════ FLOATING CART BUTTON ═══════════ */
+.floating-cart {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e040fb, #ff4081);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  z-index: 999;
+  box-shadow: 0 6px 30px rgba(224, 64, 251, 0.4);
+  overflow: visible;
+}
+
+.floating-cart__badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  color: #e040fb;
+  font-size: 0.7rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #08080c;
+  font-family: 'Outfit', sans-serif;
+}
+
+.floating-cart__glow {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e040fb, #ff4081);
+  filter: blur(15px);
+  opacity: 0.3;
+  z-index: -1;
+  animation: cart-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes cart-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.25; }
+  50% { transform: scale(1.3); opacity: 0.4; }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .floating-cart {
+    bottom: 20px;
+    right: 20px;
+    width: 54px;
+    height: 54px;
+    font-size: 1.2rem;
+  }
 }

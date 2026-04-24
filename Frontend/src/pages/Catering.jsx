@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaCalendarAlt, FaMapMarkerAlt, FaEnvelope, FaPhoneAlt, FaUserAlt, FaCheckCircle, FaUtensils } from 'react-icons/fa';
 import './Catering.css';
 
 const Catering = () => {
@@ -13,7 +14,6 @@ const Catering = () => {
     const [isSubmitting, setIsSubmitting] = useState(false); 
     const [showPopup, setShowPopup] = useState(false);
 
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -25,13 +25,12 @@ const Catering = () => {
             });
 
             setIsSubmitting(false);
-            setShowPopup(true); // 👈 show popup
+            setShowPopup(true);
             handleClear();
 
             // hide popup after 3s
             setTimeout(() => setShowPopup(false), 3000);
         }, 2000);
-
     };
 
     const handleClear = () => {
@@ -45,166 +44,179 @@ const Catering = () => {
     };
 
     return (
-        <div>
-            <div className="banner-container">
-                <div className="banner">
-                    <span className="banner-text">Event Catering</span>
-                </div>
-                <p className="event-text">Tell us about your event</p>
+        <motion.div 
+            className="catering-wrapper"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+        >
+            <div className="catering-hero">
+                <motion.div 
+                    className="catering-hero-content"
+                    initial={{ y: 30, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2, duration: 0.6 }}
+                >
+                    <h1 className="hero-title">Exclusive <span className="highlight">Event Catering</span></h1>
+                    <p className="hero-subtitle">Make your special moments unforgettable with our premium frozen delights tailored to your event.</p>
+                </motion.div>
             </div>
 
-            <div className="form-container">
-                <div className="form-group">
-                    <label>Name</label>
-                    <input
-                        type='text'
-                        placeholder='Name'
-                        value={fname}
-                        onChange={(e) => setFname(e.target.value)}
-                        required
-                        maxLength={10}
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>Email Id</label>
-                    <input
-                        type="email"
-                        placeholder="Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>Contact No.</label>
-                    <input
-                        type="tel"
-                        placeholder='Contact No.'
-                        value={contact}
-                        onChange={(e) => setContact(e.target.value)}
-                        maxLength={10}
-                        required
-                    />
-                </div>
-
-                <div className="form-group" >
-                    <label>Event Date</label>
-                    <input
-                        id='e'
-                        type="date"
-                        value={eventDate}
-                        onChange={(e) => setEventDate(e.target.value)}
-                        required
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label className="text">Event Type</label>
-
-                    <label className="radio">
-                        <input
-                            type="radio"
-                            id="self-pickup"
-                            name="eventType"
-                            value="Self Service Pickup"
-                            checked={eventType === 'Self Service Pickup'}
-                            onChange={(e) => setEventType(e.target.value)}
-                        />
-                        Self Service Pickup
-                    </label>
-
-                    <label className="radio">
-                        <input
-                            type="radio"
-                            id="self-delivery"
-                            name="eventType"
-                            value="Self Service Delivery"
-                            checked={eventType === 'Self Service Delivery'}
-                            onChange={(e) => setEventType(e.target.value)}
-                        />
-                        Self Service Delivery
-                    </label>
-
-                    <label className="radio">
-                        <input
-                            type="radio"
-                            id="full-service"
-                            name="eventType"
-                            value="Full Service Catering"
-                            checked={eventType === 'Full Service Catering'}
-                            onChange={(e) => setEventType(e.target.value)}
-                        />
-                        Full Service Catering
-                    </label>
-
-                    <label className="radio">
-                        <input
-                            type="radio"
-                            id="not-sure"
-                            name="eventType"
-                            value="Not Sure, Want To Learn More"
-                            checked={eventType === 'Not Sure, Want To Learn More'}
-                            onChange={(e) => setEventType(e.target.value)}
-                        />
-                        Not Sure, Want To Learn More
-                    </label>
-                </div>
-
-                <div className="form-group">
-                    <label>Complete Address</label>
-                    <input
-                        type="text"
-                        placeholder="Street Address"
-                        value={streetAddress}
-                        onChange={(e) => setStreetAddress(e.target.value)}
-                    />
+            <motion.div 
+                className="form-container-premium"
+                initial={{ y: 50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+            >
+                <form onSubmit={handleSubmit} className="premium-form">
+                    <h2 className="form-heading"><FaUtensils className="heading-icon" /> Event Details</h2>
                     
-                    <label>Select District</label>
-                    <select
-                        value={district}
-                        onChange={(e) => setDistrict(e.target.value)}
-                    >
-                        <option value="">-- Select District --</option>
-                        <option>Ahmednagar</option>
-                        <option>Amravati</option>
-                        <option>Beed</option>
-                        <option>Bhandara</option>
-                        <option>Chandrapur</option>
-                        <option>Dhule</option>
-                        <option>Gadchiroli</option>
-                        <option>Hingoli</option>
-                        <option>Kolhapur</option>
-                        <option>Mumbai</option>
-                        <option>Pune</option>
-                    </select>
-                </div>
-
-                <div className="button-group">
-                    <button
-                        type="submit"
-                        onClick={handleSubmit}
-                        disabled={isSubmitting} // 👈 disable while submitting
-                    >
-                        {isSubmitting ? "Submitting..." : "Submit"} {/* 👈 change text */}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleClear}
-                        disabled={isSubmitting} // optional: prevent clearing during submit
-                    >
-                        Clear
-                    </button>
-                    {showPopup && (
-                        <div className="popup">
-                            ✅ Form submitted successfully!
+                    <div className="form-grid">
+                        <div className="form-group-premium">
+                            <label><FaUserAlt className="input-icon" /> Full Name</label>
+                            <input
+                                type='text'
+                                placeholder='John Doe'
+                                value={fname}
+                                onChange={(e) => setFname(e.target.value)}
+                                required
+                                maxLength={30}
+                            />
                         </div>
-                    )}
 
-                </div>
-            </div>
-        </div>
+                        <div className="form-group-premium">
+                            <label><FaEnvelope className="input-icon" /> Email Address</label>
+                            <input
+                                type="email"
+                                placeholder="john@example.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                            />
+                        </div>
+
+                        <div className="form-group-premium">
+                            <label><FaPhoneAlt className="input-icon" /> Contact Number</label>
+                            <input
+                                type="tel"
+                                placeholder='+91 9876543210'
+                                value={contact}
+                                onChange={(e) => setContact(e.target.value)}
+                                maxLength={10}
+                                required
+                            />
+                        </div>
+
+                        <div className="form-group-premium">
+                            <label><FaCalendarAlt className="input-icon" /> Event Date</label>
+                            <input
+                                type="date"
+                                value={eventDate}
+                                onChange={(e) => setEventDate(e.target.value)}
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div className="form-group-premium full-width">
+                        <label className="text">Type of Event Service</label>
+                        <div className="radio-group-modern">
+                            {[
+                                "Self Service Pickup",
+                                "Self Service Delivery",
+                                "Full Service Catering",
+                                "Not Sure, Want To Learn More"
+                            ].map((type) => (
+                                <motion.label 
+                                    className={`radio-card ${eventType === type ? 'active' : ''}`} 
+                                    key={type}
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="eventType"
+                                        value={type}
+                                        checked={eventType === type}
+                                        onChange={(e) => setEventType(e.target.value)}
+                                    />
+                                    <span className="radio-text">{type}</span>
+                                </motion.label>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="form-group-premium full-width">
+                        <label><FaMapMarkerAlt className="input-icon" /> Complete Address</label>
+                        <input
+                            type="text"
+                            placeholder="Street Address, Area, Landmark"
+                            value={streetAddress}
+                            onChange={(e) => setStreetAddress(e.target.value)}
+                            className="address-input"
+                            required
+                        />
+                    </div>
+                    
+                    <div className="form-group-premium full-width">
+                        <label>Select District</label>
+                        <select
+                            value={district}
+                            onChange={(e) => setDistrict(e.target.value)}
+                            required
+                        >
+                            <option value="" disabled>-- Choose your district --</option>
+                            {["Ahmednagar", "Amravati", "Beed", "Bhandara", "Chandrapur", "Dhule", "Gadchiroli", "Hingoli", "Kolhapur", "Mumbai", "Pune"].map(d => (
+                                <option key={d} value={d}>{d}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="button-group-premium">
+                        <motion.button
+                            type="button"
+                            className="clear-btn-premium"
+                            onClick={handleClear}
+                            disabled={isSubmitting}
+                            whileHover={{ backgroundColor: "rgba(255,255,255,0.1)" }}
+                            whileTap={{ scale: 0.95 }}
+                        >
+                            Clear Form
+                        </motion.button>
+                        <motion.button
+                            type="submit"
+                            className="submit-btn-premium"
+                            disabled={isSubmitting}
+                            whileHover={{ scale: 1.05, boxShadow: "0 10px 20px rgba(224, 64, 251, 0.4)" }}
+                            whileTap={{ scale: 0.95 }}
+                        >
+                            {isSubmitting ? (
+                                <div className="loader"></div>
+                            ) : (
+                                "Request Catering"
+                            )}
+                        </motion.button>
+                    </div>
+                </form>
+            </motion.div>
+
+            <AnimatePresence>
+                {showPopup && (
+                    <motion.div 
+                        className="popup-premium"
+                        initial={{ opacity: 0, y: -50, x: '-50%' }}
+                        animate={{ opacity: 1, y: 20, x: '-50%' }}
+                        exit={{ opacity: 0, y: -50, x: '-50%' }}
+                    >
+                        <FaCheckCircle className="popup-icon" />
+                        <div>
+                            <h4>Success!</h4>
+                            <p>Your event request has been submitted.</p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </motion.div>
     );
 };
 

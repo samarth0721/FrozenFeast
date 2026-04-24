@@ -1,61 +1,80 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import './Cart.css';
 import CartCard from "../Components/CartCard";
 import { NavLink } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+
+const BASE_URL = "http://localhost:4000/api/v1";
 
 const Cart = ({ addedProducts = [], setCartItems }) => {
     const [cartProducts, setCartProductsLocal] = useState([]);
     const [totalAmount, setTotalAmount] = useState(0);
     const [addressList, setAddressList] = useState([]);
-    const [selectedAddress, setSelectedAddress] = useState(null); // ✅ New: Track selected address
-    const [loadingAddresses, setLoadingAddresses] = useState(true); // ✅ New: Loading state
-    const [addressError, setAddressError] = useState(null); // ✅ New: Error state
+    const [selectedAddress, setSelectedAddress] = useState(null);
+    const [loadingAddresses, setLoadingAddresses] = useState(true);
+    const [addressError, setAddressError] = useState(null);
+    const [orderHistory, setOrderHistory] = useState([]);
+    const [checkingOut, setCheckingOut] = useState(false);
+    const [checkoutSuccess, setCheckoutSuccess] = useState(false);
 
-    // ✅ Fixed: Fetch addresses once on mount (empty deps)
-    useEffect(() => {
-        const fetchAddress = async () => {
-            try {
-                setLoadingAddresses(true);
-                setAddressError(null);
-                const token = localStorage.getItem("token");
-                if (!token) {
-                    setAddressError("Please log in to fetch addresses.");
-                    return;
-                }
+    const token = localStorage.getItem('token');
 
-                const response = await fetch('https://frozenfeast.onrender.com/api/v1/deliveries', {
-                    method: "GET",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-
-                const responseData = await response.json();
-
-                if (responseData.success) {
-                    setAddressList(responseData.deliveries || []);
-                    if (responseData.deliveries && responseData.deliveries.length > 0) {
-                        setSelectedAddress(responseData.deliveries[0]._id); // ✅ Default to first address
-                    }
-                } else {
-                    throw new Error(responseData.message || 'Failed to fetch addresses');
-                }
-            } catch (error) {
-                setAddressError(error.message);
-                console.error("Error fetching Addresses:", error);
-                setAddressList([]);
-            } finally {
-                setLoadingAddresses(false);
+    // Fetch saved addresses
+    const fetchAddress = useCallback(async () => {
+        try {
+            setLoadingAddresses(true);
+            setAddressError(null);
+            if (!token) {
+                setAddressError("Please log in to view your saved addresses.");
+                return;
             }
-        };
 
+            const response = await fetch(`${BASE_URL}/deliveries`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            const responseData = await response.json();
+
+            if (responseData.success) {
+                setAddressList(responseData.deliveries || []);
+                if (responseData.deliveries && responseData.deliveries.length > 0) {
+                    setSelectedAddress(responseData.deliveries[0]._id);
+                }
+            } else {
+                throw new Error(responseData.message || 'Failed to fetch addresses');
+            }
+        } catch (error) {
+            setAddressError(error.message);
+            setAddressList([]);
+        } finally {
+            setLoadingAddresses(false);
+        }
+    }, [token]);
+
+    // Fetch order history from database
+    const fetchOrderHistory = useCallback(async () => {
+        if (!token) return;
+        try {
+            const res = await fetch(`${BASE_URL}/orders`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                setOrderHistory(data.recentOrders || []);
+            }
+        } catch (e) {
+            console.error("Error fetching orders:", e);
+        }
+    }, [token]);
+
+    useEffect(() => {
         fetchAddress();
-    }, []); // ✅ Fixed: Empty dependency array to prevent infinite loop
+        fetchOrderHistory();
+    }, [fetchAddress, fetchOrderHistory]);
 
     useEffect(() => {
         const productWithQuantity = addedProducts.map((item) => ({
@@ -76,51 +95,159 @@ const Cart = ({ addedProducts = [], setCartItems }) => {
     const removeFromCartHandler = (product) => {
         const newCart = cartProducts.filter((item) => item._id !== product._id);
         setCartProductsLocal(newCart);
-        setCartItems(newCart); // Sync with parent
+        setCartItems(newCart);
     };
 
     const updateQuantityHandler = (productId, newQuantity) => {
-        if (newQuantity < 1) return; // Prevent negative/zero quantity
+        if (newQuantity < 1) return;
         const updatedCart = cartProducts.map((item) =>
             item._id === productId ? { ...item, quantity: newQuantity } : item
         );
         setCartProductsLocal(updatedCart);
-        setCartItems(updatedCart); // Sync with parent
+        setCartItems(updatedCart);
     };
 
-    const handleAddressChange = (addressId) => {
-        setSelectedAddress(addressId);
-    };
-
-    const handleCheckout = () => {
+    const handleCheckout = async () => {
+        if (!token) {
+            alert("Please log in to place an order.");
+            return;
+        }
         if (!selectedAddress) {
-            alert("Please select a delivery address."); // ✅ Simple validation
+            alert("Please select a delivery address.");
             return;
         }
         if (cartProducts.length === 0) {
             alert("Your cart is empty.");
             return;
         }
-        // ✅ TODO: Implement checkout logic (e.g., API call, navigation)
-        console.log("Proceeding to checkout with:", { cartProducts, selectedAddress, totalAmount });
-        // Example: navigate('/payment', { state: { orderData: { cartProducts, addressId: selectedAddress, total: totalAmount } } });
+
+        setCheckingOut(true);
+        try {
+            const response = await fetch(`${BASE_URL}/orders`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    items: cartProducts,
+                    total: totalAmount,
+                    addressId: selectedAddress
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setOrderHistory(data.recentOrders || []);
+                setCartProductsLocal([]);
+                setCartItems([]);
+                setCheckoutSuccess(true);
+                setTimeout(() => setCheckoutSuccess(false), 4000);
+            } else {
+                alert(data.message || "Failed to place order. Please try again.");
+            }
+        } catch (error) {
+            console.error("Checkout error:", error);
+            alert("Network error. Please check your connection.");
+        } finally {
+            setCheckingOut(false);
+        }
+    };
+
+    const renderOrderHistory = () => {
+        if (orderHistory.length === 0) return null;
+        return (
+            <div className="order-history-section">
+                <h2>Previous Orders</h2>
+                <div className="history-list">
+                    {orderHistory.map((order, idx) => (
+                        <motion.div
+                            key={order.orderId || idx}
+                            className="history-card"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.05 }}
+                        >
+                            <div className="history-header">
+                                <div className="history-meta">
+                                    <span className="history-date">
+                                        {order.date
+                                            ? new Date(order.date).toLocaleDateString('en-IN', {
+                                                day: 'numeric', month: 'short', year: 'numeric'
+                                            })
+                                            : "Unknown date"}
+                                    </span>
+                                    <span className="history-time">
+                                        {order.date
+                                            ? new Date(order.date).toLocaleTimeString('en-IN', {
+                                                hour: '2-digit', minute: '2-digit'
+                                            })
+                                            : ""}
+                                    </span>
+                                </div>
+                                <div className="history-right">
+                                    <span className={`order-status status-${(order.status || 'placed').toLowerCase()}`}>
+                                        {order.status || "Placed"}
+                                    </span>
+                                    <span className="history-total">₹{Number(order.total).toFixed(2)}</span>
+                                </div>
+                            </div>
+                            <div className="history-items">
+                                {(order.items || []).map((item, i) => (
+                                    <span key={i} className="history-item-badge">
+                                        {item.quantity}× {item.iceName || item.name || "Item"}
+                                    </span>
+                                ))}
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            </div>
+        );
     };
 
     if (addedProducts.length === 0) {
         return (
-            <div className="cart-page">
+            <div className="cart-page flex-col">
+                <AnimatePresence>
+                    {checkoutSuccess && (
+                        <motion.div
+                            className="checkout-success-banner"
+                            initial={{ opacity: 0, y: -30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -30 }}
+                        >
+                            🎉 Order placed successfully! Your delicious treats are on the way.
+                        </motion.div>
+                    )}
+                </AnimatePresence>
                 <div className="cart-empty">
                     <h2>Your cart is empty</h2>
                     <NavLink to="/products" className="shop-now-btn">
                         Shop Now
                     </NavLink>
                 </div>
+                {renderOrderHistory()}
             </div>
         );
     }
 
     return (
-        <div className="cart-page">
+        <div className="cart-page flex-col">
+            <AnimatePresence>
+                {checkoutSuccess && (
+                    <motion.div
+                        className="checkout-success-banner"
+                        initial={{ opacity: 0, y: -30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -30 }}
+                    >
+                        🎉 Order placed successfully! Your delicious treats are on the way.
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             <div className="cart-content">
                 <div className="cart-items-section">
                     {cartProducts.map((product) => (
@@ -141,21 +268,25 @@ const Cart = ({ addedProducts = [], setCartItems }) => {
                 </div>
 
                 <div className="cart-summary-section">
-                    <h2>Your Summary</h2>
-                    <p>Total Items: {cartProducts.reduce((acc, item) => acc + item.quantity, 0)}</p>
-                    <p>Total Amount: ₹{totalAmount.toFixed(2)}</p>
+                    <h2>Order Summary</h2>
+                    <div className="summary-row">
+                        <span>Items</span>
+                        <span>{cartProducts.reduce((acc, item) => acc + item.quantity, 0)}</span>
+                    </div>
+                    <div className="summary-row summary-total">
+                        <span>Total</span>
+                        <span>₹{totalAmount.toFixed(2)}</span>
+                    </div>
 
-                    <button className="checkout-btn" onClick={handleCheckout} disabled={loadingAddresses}>
-                        {loadingAddresses ? "Loading..." : `Checkout (₹${totalAmount.toFixed(2)})`}
-                    </button>
-
-                    <h2>Select Address</h2>
+                    <h3>Delivery Address</h3>
                     {loadingAddresses ? (
-                        <p>Loading addresses...</p>
+                        <p className="loading-text">Loading addresses...</p>
                     ) : addressError ? (
                         <p className="error-message">{addressError}</p>
                     ) : addressList.length === 0 ? (
-                        <p>Please log in and fill the delivery form to add addresses.</p>
+                        <p className="no-address-msg">
+                            No saved addresses. <NavLink to="/delivery">Add one →</NavLink>
+                        </p>
                     ) : (
                         <div className="address-list">
                             {addressList.map((add) => (
@@ -165,18 +296,28 @@ const Cart = ({ addedProducts = [], setCartItems }) => {
                                         name="selectAddress"
                                         value={add._id}
                                         checked={selectedAddress === add._id}
-                                        onChange={() => handleAddressChange(add._id)}
+                                        onChange={() => setSelectedAddress(add._id)}
                                     />
                                     <div className="address-details">
-                                        <p>{add.streetAdd}, {add.city}, {add.district}, {add.pin}</p>
-                                        {add.phone && <p className="address-phone">Phone: {add.phone}</p>}
+                                        <p className="address-name">{add.name}</p>
+                                        <p>{add.streetAdd}, {add.city}, {add.district} — {add.pin}</p>
+                                        {add.contact && <p className="address-phone">📞 {add.contact}</p>}
                                     </div>
                                 </label>
                             ))}
                         </div>
                     )}
+
+                    <button
+                        className="checkout-btn"
+                        onClick={handleCheckout}
+                        disabled={checkingOut || loadingAddresses || !selectedAddress || cartProducts.length === 0}
+                    >
+                        {checkingOut ? "Placing Order..." : `Place Order (₹${totalAmount.toFixed(2)})`}
+                    </button>
                 </div>
             </div>
+            {renderOrderHistory()}
         </div>
     );
 };

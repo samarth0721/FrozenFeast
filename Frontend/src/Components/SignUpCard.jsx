@@ -40,7 +40,7 @@ const SignUpCard = () => {
 
 
             // Backend API call to signup endpoint
-            const response = await fetch('https://frozenfeast.onrender.com/api/v1/signup', {
+            const response = await fetch('http://localhost:4000/api/v1/signup', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

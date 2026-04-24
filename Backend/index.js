@@ -1,42 +1,41 @@
 const express = require("express");
 const app = express();
 const cookieParser = require("cookie-parser");
-const fileUpload = require("express-fileupload");   // 👈 add this
+const fileUpload = require("express-fileupload");
+const cors = require("cors");
 
 require("dotenv").config();
 
-const PORT = process.env.PORT || 3000;
-const cors = require('cors');
+const PORT = process.env.PORT || 4000;
 
+// ─── Middleware ───────────────────────────────────────────────────
 app.use(cors({
-  origin: true,
-  credentials: true
+    origin: true,
+    credentials: true
 }));
- // Your frontend port
 
 app.use(express.json());
 app.use(cookieParser());
 
-const userRoutes = require('./routes/user');
-app.use('/api/v1/user', userRoutes);
+app.use(fileUpload({
+    useTempFiles: true,
+    tempFileDir: "/tmp/",
+}));
 
-// const passport = require('./middleware/passport');
-// app.use(passport.initialize());
-// app.use(passport.session()); // Optional for sessions
-
-app.use(
-  fileUpload({
-    useTempFiles: true,     
-    tempFileDir: "/tmp/",    
-  })
-);
-
+// ─── Database & Cloudinary ───────────────────────────────────────
 require("./config/database").connect();
 require("./config/cloudinary").connect();
 
-const user = require("./routes/user");
-app.use("/api/v1", user);
+// ─── Routes ──────────────────────────────────────────────────────
+const userRoutes = require("./routes/user");
 
+// Mount at /api/v1/user  → for /profile, /favorites, /signup, /login etc.
+app.use("/api/v1/user", userRoutes);
+
+// Mount at /api/v1       → for /icecreams, /shop, /deliveries, /orders etc.
+app.use("/api/v1", userRoutes);
+
+// ─── Server ──────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`server is running at port ${PORT}`);
+    console.log(`✅ Server running at http://localhost:${PORT}`);
 });

@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, NavLink } from 'react-router-dom';
 import iceCreamIcon from '../assets/logo.png';
+import { motion, AnimatePresence } from 'framer-motion';
 import './ProfilePage.css';
+
+const BASE_URL = "http://localhost:4000/api/v1";
 
 const ProfilePage = () => {
     const [user, setUser] = useState(null);
@@ -10,117 +13,137 @@ const ProfilePage = () => {
     const [error, setError] = useState(null);
     const [editing, setEditing] = useState(false);
     const [editForm, setEditForm] = useState({ name: '', email: '' });
+    const [favorites, setFavorites] = useState([]);
+    const [recentOrders, setRecentOrders] = useState([]);
+    const [activeTab, setActiveTab] = useState('info'); // 'info' | 'favorites' | 'orders' | 'addresses'
+    const [savingProfile, setSavingProfile] = useState(false);
+
+    const token = localStorage.getItem('token');
     const navigate = useNavigate();
 
-    // Fetch user profile and addresses on mount
-    useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    setError('No authentication token found. Please log in.');
-                    navigate('/login');
-                    return;
-                }
+    const fetchAll = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
 
-                // Fetch user profile - Use /profile endpoint
-                const userResponse = await fetch('https://frozenfeast.onrender.com/api/v1/user/profile', {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                    },
-                    credentials: 'include',
-                });
-
-                if (!userResponse.ok) {
-                    if (userResponse.status === 401) {
-                        localStorage.removeItem('token'); // Clear invalid token
-                        throw new Error('Session expired. Please log in again.');
-                    } else if (userResponse.status === 404) {
-                        throw new Error('Profile endpoint not found. Ensure backend has /api/v1/user/profile route.');
-                    } else {
-                        throw new Error(`HTTP error! Status: ${userResponse.status}`);
-                    }
-                }
-
-                const userData = await userResponse.json();
-                if (userData.success) {
-                    const userInfo = userData.user || userData.data || userData;
-                    setUser(userInfo);
-                    setEditForm({ name: userInfo.name || '', email: userInfo.email || '' });
-                } else {
-                    throw new Error(userData.message || 'Failed to fetch user profile');
-                }
-
-                // Fetch addresses (optional - skip if endpoint issues)
-                try {
-                    const addressResponse = await fetch('https://frozenfeast.onrender.com/api/v1/deliveries', {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`,
-                        },
-                        credentials: 'include',
-                    });
-
-                    if (addressResponse.ok) {
-                        const addressData = await addressResponse.json();
-                        if (addressData.success) {
-                            setAddresses(addressData.deliveries || []);
-                        }
-                    }
-                } catch (addrErr) {
-                    console.warn('Addresses fetch failed (non-critical):', addrErr);
-                    // Don't set error for addresses - keep profile functional
-                }
-            } catch (err) {
-                console.error('Profile fetch error:', err);
-                setError(err.message);
-            } finally {
-                setLoading(false);
+            if (!token) {
+                navigate('/login');
+                return;
             }
-        };
 
-        fetchProfile();
-    }, [navigate]);
+            // Fetch profile (includes favorites + recentOrders)
+            const [profileRes, addressRes, ordersRes] = await Promise.allSettled([
+                fetch(`${BASE_URL}/user/profile`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }),
+                fetch(`${BASE_URL}/deliveries`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }),
+                fetch(`${BASE_URL}/orders`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+            ]);
 
-    const handleEdit = () => {
-        if (user) {
-            setEditForm({ name: user.name || '', email: user.email || '' });
+            // Handle profile
+            if (profileRes.status === 'fulfilled') {
+                const userData = await profileRes.value.json();
+                if (!profileRes.value.ok) {
+                    if (profileRes.value.status === 401) {
+                        localStorage.removeItem('token');
+                        navigate('/login');
+                        return;
+                    }
+                    throw new Error(userData.message || 'Failed to fetch profile');
+                }
+                if (userData.success) {
+                    setUser(userData.user);
+                    setEditForm({ name: userData.user.name || '', email: userData.user.email || '' });
+                    setFavorites(userData.user.favorites || []);
+                }
+            }
+
+            // Handle addresses
+            if (addressRes.status === 'fulfilled' && addressRes.value.ok) {
+                const addrData = await addressRes.value.json();
+                if (addrData.success) setAddresses(addrData.deliveries || []);
+            }
+
+            // Handle orders (dedicated endpoint for freshest data)
+            if (ordersRes.status === 'fulfilled' && ordersRes.value.ok) {
+                const ordersData = await ordersRes.value.json();
+                if (ordersData.success) setRecentOrders(ordersData.recentOrders || []);
+            }
+
+        } catch (err) {
+            console.error('Profile fetch error:', err);
+            setError(err.message);
+        } finally {
+            setLoading(false);
         }
-        setEditing(true);
-    };
+    }, [token, navigate]);
+
+    useEffect(() => {
+        fetchAll();
+    }, [fetchAll]);
 
     const handleSave = async () => {
         try {
-            const token = localStorage.getItem('token');
-            if (!token) throw new Error('No token found');
-
-            const response = await fetch('https://frozenfeast.onrender.com/api/v1/user/profile', { // ✅ Match GET endpoint
+            setSavingProfile(true);
+            const response = await fetch(`${BASE_URL}/user/profile`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
                 },
                 body: JSON.stringify(editForm),
-                credentials: 'include',
             });
 
-            if (!response.ok) {
-                throw new Error(`Update failed: ${response.status}`);
-            }
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || `Update failed`);
 
-            const updatedData = await response.json();
-            const updatedUser = updatedData.user || updatedData.data || updatedData;
-            setUser(updatedUser);
-            setEditing(false);
-            alert('Profile updated successfully!');
+            if (data.success) {
+                setUser(prev => ({ ...prev, ...data.user }));
+                setEditing(false);
+            }
         } catch (err) {
-            console.error('Update error:', err);
             alert(`Error: ${err.message}`);
+        } finally {
+            setSavingProfile(false);
+        }
+    };
+
+    const removeFavorite = async (index) => {
+        const newFavs = favorites.filter((_, i) => i !== index);
+        setFavorites(newFavs);
+        try {
+            await fetch(`${BASE_URL}/user/favorites`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ favorites: newFavs })
+            });
+        } catch (e) {
+            console.error('Error removing favorite', e);
+        }
+    };
+
+    const deleteAddress = async (id) => {
+        if (!window.confirm("Remove this address?")) return;
+        try {
+            const res = await fetch(`${BASE_URL}/delivery/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                setAddresses(prev => prev.filter(a => a._id !== id));
+            } else {
+                alert(data.message || "Failed to delete address");
+            }
+        } catch (e) {
+            console.error('Error deleting address', e);
         }
     };
 
@@ -129,6 +152,13 @@ const ProfilePage = () => {
         localStorage.removeItem('role');
         navigate('/');
     };
+
+    const tabConfig = [
+        { id: 'info', label: '👤 Profile', count: null },
+        { id: 'favorites', label: '❤️ Favorites', count: favorites.length },
+        { id: 'orders', label: '📦 Orders', count: recentOrders.length },
+        { id: 'addresses', label: '📍 Addresses', count: addresses.length },
+    ];
 
     if (loading) {
         return (
@@ -142,10 +172,11 @@ const ProfilePage = () => {
     if (error) {
         return (
             <div className="profile-error">
-                <h2>{error}</h2>
-                <p>Check the browser console (F12) for more details.</p>
-                <button onClick={() => navigate('/login')}>Go to Login</button>
-                <button onClick={() => window.location.reload()}>Retry</button>
+                <h2>⚠️ {error}</h2>
+                <div className="error-actions">
+                    <button onClick={fetchAll}>Retry</button>
+                    <button onClick={() => navigate('/login')}>Go to Login</button>
+                </div>
             </div>
         );
     }
@@ -161,63 +192,295 @@ const ProfilePage = () => {
 
     return (
         <div className="profile-container">
+            {/* Header */}
             <div className="profile-header">
-                <img src={iceCreamIcon} alt="FrozenFeast" className="logo" />
-                <h1>My Profile</h1>
+                <div className="profile-avatar">
+                    {user.name ? user.name[0].toUpperCase() : '?'}
+                </div>
+                <div className="profile-header-info">
+                    <h1>{user.name}</h1>
+                    <p className="profile-email">{user.email}</p>
+                    <span className={`role-badge role-${(user.role || 'customer').toLowerCase()}`}>
+                        {user.role || 'Customer'}
+                    </span>
+                </div>
+                <button onClick={handleLogout} className="logout-btn">Logout</button>
             </div>
 
-            <div className="profile-content">
-                <div className="profile-section">
-                    <h2>Personal Information</h2>
-                    {editing ? (
-                        <div className="edit-form">
-                            <input
-                                type="text"
-                                placeholder="Full Name"
-                                value={editForm.name}
-                                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                            />
-                            <input
-                                type="email"
-                                placeholder="Email"
-                                value={editForm.email}
-                                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                            />
-                            <div className="edit-buttons">
-                                <button onClick={handleSave}>Save Changes</button>
-                                <button onClick={() => setEditing(false)}>Cancel</button>
+            {/* Tabs */}
+            <div className="profile-tabs">
+                {tabConfig.map(tab => (
+                    <button
+                        key={tab.id}
+                        className={`profile-tab ${activeTab === tab.id ? 'active' : ''}`}
+                        onClick={() => setActiveTab(tab.id)}
+                    >
+                        {tab.label}
+                        {tab.count !== null && tab.count > 0 && (
+                            <span className="tab-badge">{tab.count}</span>
+                        )}
+                    </button>
+                ))}
+            </div>
+
+            {/* Tab Content */}
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={activeTab}
+                    className="profile-tab-content"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -12 }}
+                    transition={{ duration: 0.2 }}
+                >
+
+                    {/* ── Profile Info ─────────────────────────────── */}
+                    {activeTab === 'info' && (
+                        <div className="profile-section">
+                            <div className="section-header">
+                                <h2>Personal Information</h2>
+                                {!editing && (
+                                    <button onClick={() => setEditing(true)} className="edit-btn">
+                                        Edit
+                                    </button>
+                                )}
                             </div>
-                        </div>
-                    ) : (
-                        <div className="profile-info">
-                            <p><strong>Name:</strong> {user.name || 'N/A'}</p>
-                            <p><strong>Email:</strong> {user.email || 'N/A'}</p>
-                            {user.phone && <p><strong>Phone:</strong> {user.phone}</p>}
-                            <p><strong>Role:</strong> {user.role || 'Customer'}</p>
-                            <button onClick={handleEdit} className="edit-btn">Edit Profile</button>
+
+                            {editing ? (
+                                <div className="edit-form">
+                                    <label>Full Name</label>
+                                    <input
+                                        type="text"
+                                        value={editForm.name}
+                                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                                        placeholder="Full Name"
+                                    />
+                                    <label>Email</label>
+                                    <input
+                                        type="email"
+                                        value={editForm.email}
+                                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                                        placeholder="Email"
+                                    />
+                                    <div className="edit-buttons">
+                                        <button onClick={handleSave} disabled={savingProfile} className="save-btn">
+                                            {savingProfile ? "Saving..." : "Save Changes"}
+                                        </button>
+                                        <button onClick={() => setEditing(false)} className="cancel-btn">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="info-grid">
+                                    <div className="info-item">
+                                        <span className="info-label">Name</span>
+                                        <span className="info-value">{user.name || 'N/A'}</span>
+                                    </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Email</span>
+                                        <span className="info-value">{user.email || 'N/A'}</span>
+                                    </div>
+                                    {user.phone && (
+                                        <div className="info-item">
+                                            <span className="info-label">Phone</span>
+                                            <span className="info-value">{user.phone}</span>
+                                        </div>
+                                    )}
+                                    <div className="info-item">
+                                        <span className="info-label">Role</span>
+                                        <span className="info-value">{user.role || 'Customer'}</span>
+                                    </div>
+                                    <div className="info-item">
+                                        <span className="info-label">Member since</span>
+                                        <span className="info-value">
+                                            {user.createdAt
+                                                ? new Date(user.createdAt).toLocaleDateString('en-IN', {
+                                                    month: 'long', year: 'numeric'
+                                                })
+                                                : 'N/A'}
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
-                </div>
 
-                {addresses.length > 0 && (
-                    <div className="profile-section">
-                        <h2>Saved Addresses ({addresses.length})</h2>
-                        <div className="addresses-list">
-                            {addresses.map((address, index) => (
-                                <div key={address._id || index} className="address-item">
-                                    <p>{address.streetAdd}, {address.city}, {address.district}, {address.pin}</p>
-                                    {address.phone && <p className="address-phone">Phone: {address.phone}</p>}
+                    {/* ── Favorites ────────────────────────────────── */}
+                    {activeTab === 'favorites' && (
+                        <div className="profile-section">
+                            <div className="section-header">
+                                <h2>My Favorites</h2>
+                                <NavLink to="/products" className="browse-link">Browse Products →</NavLink>
+                            </div>
+
+                            {favorites.length > 0 ? (
+                                <div className="favorites-grid">
+                                    {favorites.map((fav, index) => (
+                                        <motion.div
+                                            key={fav._id || index}
+                                            className="favorite-card"
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ delay: index * 0.05 }}
+                                        >
+                                            {fav.iceUrl && (
+                                                <img
+                                                    src={fav.iceUrl}
+                                                    alt={fav.iceName || fav.name}
+                                                    className="fav-img"
+                                                    onError={(e) => { e.target.style.display = 'none'; }}
+                                                />
+                                            )}
+                                            <div className="fav-body">
+                                                <p className="fav-name">{fav.iceName || fav.name || 'Unknown'}</p>
+                                                {fav.price > 0 && (
+                                                    <p className="fav-price">₹{fav.price}</p>
+                                                )}
+                                                {fav.tags && (
+                                                    <span className="fav-tag">{fav.tags}</span>
+                                                )}
+                                            </div>
+                                            <button
+                                                className="remove-fav-btn"
+                                                onClick={() => removeFavorite(index)}
+                                                title="Remove from favorites"
+                                            >
+                                                ✕
+                                            </button>
+                                        </motion.div>
+                                    ))}
                                 </div>
-                            ))}
+                            ) : (
+                                <div className="empty-state">
+                                    <span className="empty-icon">❤️</span>
+                                    <p>No favorites yet.</p>
+                                    <NavLink to="/products" className="empty-action-btn">
+                                        Browse Products
+                                    </NavLink>
+                                </div>
+                            )}
                         </div>
-                    </div>
-                )}
+                    )}
 
-                <div className="profile-section">
-                    <h2>Account Actions</h2>
-                    <button onClick={handleLogout} className="logout-btn">Logout</button>
-                </div>
-            </div>
+                    {/* ── Orders ───────────────────────────────────── */}
+                    {activeTab === 'orders' && (
+                        <div className="profile-section">
+                            <div className="section-header">
+                                <h2>Recent Orders</h2>
+                            </div>
+
+                            {recentOrders.length > 0 ? (
+                                <div className="orders-list">
+                                    {recentOrders.map((order, idx) => (
+                                        <motion.div
+                                            key={order.orderId || idx}
+                                            className="order-card"
+                                            initial={{ opacity: 0, y: 16 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: idx * 0.05 }}
+                                        >
+                                            <div className="order-card-header">
+                                                <div>
+                                                    <p className="order-id">
+                                                        Order #{(order.orderId || '').slice(-8).toUpperCase() || idx + 1}
+                                                    </p>
+                                                    <p className="order-date">
+                                                        {order.date
+                                                            ? new Date(order.date).toLocaleDateString('en-IN', {
+                                                                day: 'numeric', month: 'short', year: 'numeric',
+                                                                hour: '2-digit', minute: '2-digit'
+                                                            })
+                                                            : 'N/A'}
+                                                    </p>
+                                                </div>
+                                                <div className="order-card-right">
+                                                    <span className={`order-status status-${(order.status || 'placed').toLowerCase()}`}>
+                                                        {order.status || 'Placed'}
+                                                    </span>
+                                                    <span className="order-total">₹{Number(order.total).toFixed(2)}</span>
+                                                </div>
+                                            </div>
+                                            <div className="order-items-list">
+                                                {(order.items || []).map((item, i) => (
+                                                    <div key={i} className="order-item-row">
+                                                        <span className="order-item-name">
+                                                            {item.iceName || item.name || 'Item'}
+                                                        </span>
+                                                        <span className="order-item-qty">×{item.quantity}</span>
+                                                        <span className="order-item-price">
+                                                            ₹{(item.price * item.quantity).toFixed(2)}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="empty-state">
+                                    <span className="empty-icon">📦</span>
+                                    <p>No orders placed yet.</p>
+                                    <NavLink to="/products" className="empty-action-btn">
+                                        Shop Now
+                                    </NavLink>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* ── Addresses ────────────────────────────────── */}
+                    {activeTab === 'addresses' && (
+                        <div className="profile-section">
+                            <div className="section-header">
+                                <h2>Saved Addresses</h2>
+                                <NavLink to="/delivery" className="browse-link">+ Add Address</NavLink>
+                            </div>
+
+                            {addresses.length > 0 ? (
+                                <div className="addresses-list">
+                                    {addresses.map((address, index) => (
+                                        <motion.div
+                                            key={address._id || index}
+                                            className="address-item"
+                                            initial={{ opacity: 0, x: -16 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: index * 0.07 }}
+                                        >
+                                            <div className="address-icon">📍</div>
+                                            <div className="address-body">
+                                                <p className="address-title">{address.name}</p>
+                                                <p className="address-line">
+                                                    {address.streetAdd}, {address.city}, {address.district} — {address.pin}
+                                                </p>
+                                                {address.contact && (
+                                                    <p className="address-contact">📞 {address.contact}</p>
+                                                )}
+                                            </div>
+                                            <button
+                                                className="delete-address-btn"
+                                                onClick={() => deleteAddress(address._id)}
+                                                title="Delete address"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="empty-state">
+                                    <span className="empty-icon">📍</span>
+                                    <p>No saved addresses.</p>
+                                    <NavLink to="/delivery" className="empty-action-btn">
+                                        Add Address
+                                    </NavLink>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                </motion.div>
+            </AnimatePresence>
         </div>
     );
 };

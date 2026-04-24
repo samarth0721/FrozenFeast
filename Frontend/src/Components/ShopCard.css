@@ -1,36 +1,44 @@
+/* ShopCard — dark theme */
 .shop-container {
-  background-color: white;
+  background: #111118;
+  border: 1px solid rgba(255,255,255,0.06);
   padding: 1rem;
-  border-radius: 0.75rem;
+  border-radius: 1rem;
   max-width: 300px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1rem;
-  margin: 1rem;
+  margin: 0;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease; /* Hover effect */
+  transition: all 0.3s ease;
+  color: #f0f0f5;
 }
 
-.shop-container:hover,
-.shop-container:focus {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+.shop-container:hover {
+  transform: translateY(-5px);
+  border-color: rgba(224, 64, 251, 0.25);
+  box-shadow: 0 8px 30px rgba(224, 64, 251, 0.12);
 }
 
 .shop-image-wrapper {
   width: 100%;
   position: relative;
+  border-radius: 0.75rem;
+  overflow: hidden;
 }
 
 .shop-img {
   width: 100%;
-  border-radius: 0.625rem;
-  aspect-ratio: 1 / 1; /* Square crop for consistency */
-  object-fit: cover; /* HD cropping without distortion */
-  image-rendering: high-quality; /* Sharp HD rendering */
-  image-rendering: -webkit-optimize-contrast; /* Enhanced sharpness */
+  border-radius: 0.75rem;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.shop-container:hover .shop-img {
+  transform: scale(1.05);
 }
 
 .shop-info {
@@ -39,16 +47,17 @@
 }
 
 .shop-name {
-  font-weight: bold;
+  font-weight: 700;
   margin: 0;
   font-size: 1.1rem;
-  color: black;
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
 }
 
 .shop-location {
-  margin: 0;
+  margin: 4px 0 0;
   font-size: 0.9rem;
-  color: #666;
+  color: #9e9eaf;
 }
 
 .shop-rating {
@@ -61,23 +70,14 @@
 
 .star {
   font-size: 1.2rem;
-  color: #ffd700; /* Gold for stars */
-}
-
-.star.full {
   color: #ffd700;
 }
-
-.star.half {
-  color: #ffd700; /* Or use a custom half-star icon */
-}
-
-.star.empty {
-  color: #ccc;
-}
+.star.full { color: #ffd700; }
+.star.half { color: #ffd700; }
+.star.empty { color: #3a3a4a; }
 
 .rating-text {
   font-size: 0.9rem;
-  color: #666;
+  color: #9e9eaf;
   margin-left: 0.5rem;
 }
