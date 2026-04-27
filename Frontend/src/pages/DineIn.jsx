@@ -103,9 +103,9 @@ const DineIn = () => {
                             onChange={(e) => setLocation(e.target.value)}
                             className="location-input"
                         />
-                        <button type="submit" className="search-button-new">
+                        {/* <button type="submit" className="search-button-new">
                             🔍
-                        </button>
+                        </button> */}
                     </div>
                 </form>
             </motion.div>
