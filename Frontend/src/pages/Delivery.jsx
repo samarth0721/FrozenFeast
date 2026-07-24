@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaUserAlt, FaPhoneAlt, FaMapMarkerAlt, FaCity, FaMapPin, FaCheckCircle, FaExclamationCircle, FaRegCreditCard, FaTruck } from "react-icons/fa";
 import './Delivery.css';
+import { API_VERSION_URL } from '../config';
 
 const Delivery = () => {
     const [deliveryData, setDeliveryData] = useState({
@@ -38,7 +39,7 @@ const Delivery = () => {
                 throw new Error("Please log in to submit delivery details.");
             }
 
-            const response = await fetch('https://frozenfeast.onrender.com/api/v1/user/delivery', {
+            const response = await fetch(`${API_VERSION_URL}/user/delivery`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

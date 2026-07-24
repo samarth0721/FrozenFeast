@@ -4,7 +4,9 @@ import CartCard from "../Components/CartCard";
 import { NavLink } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
-const BASE_URL = "http://localhost:4000/api/v1";
+import { API_VERSION_URL } from "../config";
+
+const BASE_URL = API_VERSION_URL;
 
 const Cart = ({ addedProducts = [], setCartItems }) => {
     const [cartProducts, setCartProductsLocal] = useState([]);

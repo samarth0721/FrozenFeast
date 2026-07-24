@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import ShopCard from "../Components/ShopCard";
 import './DineIn.css';
 import { motion, AnimatePresence } from 'framer-motion';
+import { API_VERSION_URL } from '../config';
 
 const DineIn = () => {
     const [dineinList, setDineinList] = useState([]);
@@ -14,7 +15,7 @@ const DineIn = () => {
             try {
                 setLoading(true);
                 setError(null);
-                const response = await fetch('https://frozenfeast.onrender.com/api/v1/shop');
+                const response = await fetch(`${API_VERSION_URL}/shop`);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
