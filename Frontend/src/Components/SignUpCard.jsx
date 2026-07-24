@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"; // Added for redirection
 import iceCreamIcon from '../assets/logo.png';
 import './SignUpCard.css';
 import { Link } from "react-router-dom";
+import { API_VERSION_URL } from '../config';
 
 const SignUpCard = () => {
     const [identity, setIdentity] = useState("");
@@ -40,7 +41,7 @@ const SignUpCard = () => {
 
 
             // Backend API call to signup endpoint
-            const response = await fetch('http://localhost:4000/api/v1/signup', {
+            const response = await fetch(`${API_VERSION_URL}/signup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

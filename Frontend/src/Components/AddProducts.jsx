@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import iceCreamIcon from '../assets/logo.png';
 import './AddProducts.css';
 import { Link } from "react-router-dom";
+import { API_VERSION_URL } from '../config';
 
 const AddProduct = () => {
     const [productData, setProductData] = useState({
@@ -50,7 +51,7 @@ const AddProduct = () => {
             formData.append('price', productData.price);
             formData.append('imageFile', imageFile);
 
-            const response = await fetch('https://frozenfeast.onrender.com/api/v1/imageUpload', {
+            const response = await fetch(`${API_VERSION_URL}/imageUpload`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

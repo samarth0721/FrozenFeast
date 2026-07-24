@@ -3,6 +3,7 @@ import UserCard from '../Components/UserCard';
 import './Products.css';
 import AddProduct from '../Components/AddProducts';
 import { motion, AnimatePresence } from 'framer-motion';
+import { API_VERSION_URL } from '../config';
 
 const Products = ({ cartItems, setCartItems }) => {
     const [productList, setProductList] = useState([]);
@@ -22,7 +23,7 @@ const Products = ({ cartItems, setCartItems }) => {
                 setLoading(true);
                 setError(null);
 
-                const response = await fetch('http://localhost:4000/api/v1/icecreams');
+                const response = await fetch(`${API_VERSION_URL}/icecreams`);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
@@ -49,7 +50,7 @@ const Products = ({ cartItems, setCartItems }) => {
         const fetchUserFavs = async () => {
             if (token) {
                 try {
-                    const res = await fetch('http://localhost:4000/api/v1/user/profile', {
+                    const res = await fetch(`${API_VERSION_URL}/user/profile`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     const data = await res.json();
@@ -88,7 +89,7 @@ const Products = ({ cartItems, setCartItems }) => {
         }
         setFavorites(newFavs);
         if (token) {
-            fetch('http://localhost:4000/api/v1/user/favorites', {
+            fetch(`${API_VERSION_URL}/user/favorites`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ favorites: newFavs })

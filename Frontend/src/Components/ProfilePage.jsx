@@ -4,7 +4,9 @@ import iceCreamIcon from '../assets/logo.png';
 import { motion, AnimatePresence } from 'framer-motion';
 import './ProfilePage.css';
 
-const BASE_URL = "http://localhost:4000/api/v1";
+import { API_VERSION_URL } from "../config";
+
+const BASE_URL = API_VERSION_URL;
 
 const ProfilePage = () => {
     const [user, setUser] = useState(null);
