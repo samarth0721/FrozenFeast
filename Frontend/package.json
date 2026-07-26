@@ -1,6 +1,6 @@
 {
   "name": "icecream",
-  "proxy": "http://localhost:4000",
+  "proxy": "https://frozenfeast.onrender.com",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
