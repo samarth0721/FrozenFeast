@@ -4,11 +4,13 @@ const FacebookStrategy = require('passport-facebook').Strategy;
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 
+const BACKEND_URL = process.env.BACKEND_URL || "https://frozenfeast.onrender.com";
+
 // Google Strategy
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "http://localhost:4000/api/v1/auth/google/callback"
+    callbackURL: `${BACKEND_URL}/api/v1/auth/google/callback`
 }, async (accessToken, refreshToken, profile, done) => {
     try {
         // Find or create user by Google ID or email
@@ -38,7 +40,7 @@ passport.use(new GoogleStrategy({
 passport.use(new FacebookStrategy({
     clientID: process.env.FACEBOOK_APP_ID,
     clientSecret: process.env.FACEBOOK_APP_SECRET,
-    callbackURL: "http://localhost:4000/api/v1/auth/facebook/callback",
+    callbackURL: `${BACKEND_URL}/api/v1/auth/facebook/callback`,
     profileFields: ['id', 'displayName', 'emails']
 }, async (accessToken, refreshToken, profile, done) => {
     try {
